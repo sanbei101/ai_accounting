@@ -45,6 +45,8 @@ jobs:
             --target-platform android-arm64 \
             --obfuscate \
             --split-debug-info=./debug-info
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -92,12 +94,14 @@ jobs:
             --split-per-abi \
             --target-platform android-arm64 \
             --analyze-size
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false"
 
       - name: Upload Size Analysis Report
         uses: actions/upload-artifact@v4
         with:
           name: size-analysis-report
-          path: build/apk-code-size-analysis*.json
+          path: build/**/*.json
 
 
   release:

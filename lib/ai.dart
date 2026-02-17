@@ -59,7 +59,7 @@ class ChatResponse {
     required this.usage,
   });
 
-  factory ChatResponse.fromJson(Map<String, Object> json) {
+  factory ChatResponse.fromJson(Map<String, Object?> json) {
     return ChatResponse(
       id: json['id'] as String,
       object: json['object'] as String,
@@ -84,7 +84,7 @@ class ChatChoice {
     required this.finishReason,
   });
 
-  factory ChatChoice.fromJson(Map<String, Object> json) {
+  factory ChatChoice.fromJson(Map<String, Object?> json) {
     return ChatChoice(
       index: json['index'] as int,
       message: ChatMessage.fromJson(json['message'] as Map<String, Object>),
@@ -104,7 +104,7 @@ class ChatUsage {
     required this.totalTokens,
   });
 
-  factory ChatUsage.fromJson(Map<String, Object> json) {
+  factory ChatUsage.fromJson(Map<String, Object?> json) {
     return ChatUsage(
       promptTokens: json['prompt_tokens'] as int,
       completionTokens: json['completion_tokens'] as int,
@@ -134,7 +134,7 @@ Future<String> chat(String input) async {
   );
 
   final data =
-      jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, Object>;
+      jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, Object?>;
   final chatResponse = ChatResponse.fromJson(data);
   return chatResponse.choices.first.message.content;
 }

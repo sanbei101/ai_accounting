@@ -43,7 +43,20 @@ jobs:
             --split-per-abi \
             --target-platform android-arm64 \
             --obfuscate \
-            --split-debug-info=./debug-info
+            --split-debug-info=./debug-info \
+            --analyze-size
+      
+      - name: Upload Analysis Results
+        uses: actions/upload-artifact@v6
+        with:
+          name: analysis-results
+          path: build/apk-code-size-analysis*.json
+
+      - name: Upload debug info
+        uses: actions/upload-artifact@v6
+        with:
+          name: debug-info
+          path: debug-info/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

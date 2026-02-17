@@ -36,9 +36,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Generate Freezed code
-        run: dart run build_runner build --delete-conflicting-outputs
-        
       - name: Build APK
         run: |
           flutter build apk \

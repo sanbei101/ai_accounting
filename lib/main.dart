@@ -2,6 +2,24 @@ import 'package:ai_accounting/const.dart';
 import 'package:ai_accounting/theme.dart';
 import 'package:flutter/material.dart';
 
+class Transaction {
+  final String id;
+  final String categoryName;
+  final IconData categoryIcon;
+  final CategoryType type;
+  final double amount;
+  final DateTime dateTime;
+
+  Transaction({
+    required this.id,
+    required this.categoryName,
+    required this.categoryIcon,
+    required this.type,
+    required this.amount,
+    required this.dateTime,
+  });
+}
+
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
@@ -17,8 +35,40 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final List<Transaction> _transactions = [];
+
+  void _addTransaction(Transaction transaction) {
+    setState(() {
+      _transactions.insert(0, transaction);
+    });
+  }
+
+  double get _totalIncome => _transactions
+      .where((t) => t.type == CategoryType.income)
+      .fold(0, (sum, t) => sum + t.amount);
+
+  double get _totalExpense => _transactions
+      .where((t) => t.type == CategoryType.expense)
+      .fold(0, (sum, t) => sum + t.amount);
+
+  String _formatDate(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(dt.year, dt.month, dt.day);
+
+    if (date == today) {
+      return '今天 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    }
+    return '${dt.month}/${dt.day} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +100,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '¥ 12,580.00',
+                      '¥ ${(_totalIncome - _totalExpense).toStringAsFixed(2)}',
                       style: context.textTheme.headlineLarge?.copyWith(
                         color: context.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.bold,
@@ -91,7 +141,7 @@ class HomePage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '¥ 8,200.00',
+                                    '¥ ${_totalIncome.toStringAsFixed(2)}',
                                     style: context.textTheme.titleMedium
                                         ?.copyWith(
                                           color: context
@@ -138,7 +188,7 @@ class HomePage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '¥ 5,620.00',
+                                    '¥ ${_totalExpense.toStringAsFixed(2)}',
                                     style: context.textTheme.titleMedium
                                         ?.copyWith(
                                           color: context
@@ -161,25 +211,38 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 24),
             Text('最近账单', style: context.textTheme.titleLarge),
             Expanded(
-              child: ListView.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: Icon(
-                      Icons.restaurant,
-                      color: context.colorScheme.primary,
-                    ),
-                    title: const Text('餐饮美食'),
-                    subtitle: const Text('今天 12:30'),
-                    trailing: Text(
-                      '- ¥ 35.00',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        color: context.colorScheme.error,
+              child: _transactions.isEmpty
+                  ? Center(
+                      child: Text(
+                        '暂无账单',
+                        style: context.textTheme.bodyLarge?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
                       ),
+                    )
+                  : ListView.builder(
+                      itemCount: _transactions.length,
+                      itemBuilder: (context, index) {
+                        final t = _transactions[index];
+                        final isExpense = t.type == CategoryType.expense;
+                        return ListTile(
+                          leading: Icon(
+                            t.categoryIcon,
+                            color: context.colorScheme.primary,
+                          ),
+                          title: Text(t.categoryName),
+                          subtitle: Text(_formatDate(t.dateTime)),
+                          trailing: Text(
+                            '${isExpense ? '-' : '+'} ¥ ${t.amount.toStringAsFixed(2)}',
+                            style: context.textTheme.titleMedium?.copyWith(
+                              color: isExpense
+                                  ? context.colorScheme.error
+                                  : context.colorScheme.primary,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -190,7 +253,7 @@ class HomePage extends StatelessWidget {
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder: (context) => const AddTransactionPanel(),
+            builder: (context) => AddTransactionPanel(onAdd: _addTransaction),
           );
         },
         icon: const Icon(Icons.add),
@@ -201,7 +264,9 @@ class HomePage extends StatelessWidget {
 }
 
 class AddTransactionPanel extends StatefulWidget {
-  const AddTransactionPanel({super.key});
+  final Function(Transaction) onAdd;
+
+  const AddTransactionPanel({super.key, required this.onAdd});
 
   @override
   State<AddTransactionPanel> createState() => _AddTransactionPanelState();
@@ -219,6 +284,19 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
   }
 
   void _saveTransaction() {
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    if (amount <= 0 || _selectedCategory == null) return;
+
+    final transaction = Transaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      categoryName: _selectedCategory!.name,
+      categoryIcon: _selectedCategory!.icon,
+      type: _selectedType,
+      amount: amount,
+      dateTime: DateTime.now(),
+    );
+
+    widget.onAdd(transaction);
     Navigator.pop(context);
   }
 
@@ -383,7 +461,8 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                                       size: 20,
                                       color: isSelected
                                           ? context
-                                              .colorScheme.onPrimaryContainer
+                                                .colorScheme
+                                                .onPrimaryContainer
                                           : context.colorScheme.onSurface,
                                     ),
                                     const SizedBox(width: 8),
@@ -391,11 +470,12 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                                       category.name,
                                       style: context.textTheme.bodyLarge
                                           ?.copyWith(
-                                        color: isSelected
-                                            ? context
-                                                .colorScheme.onPrimaryContainer
-                                            : context.colorScheme.onSurface,
-                                      ),
+                                            color: isSelected
+                                                ? context
+                                                      .colorScheme
+                                                      .onPrimaryContainer
+                                                : context.colorScheme.onSurface,
+                                          ),
                                     ),
                                   ],
                                 ),

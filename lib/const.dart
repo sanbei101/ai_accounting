@@ -64,3 +64,23 @@ enum Category {
   static List<Category> get incomes =>
       Category.values.where((c) => c.type == CategoryType.income).toList();
 }
+
+const aiPrompt = """
+请你模拟生成一条账单记录,严格按照以下要求输出JSON格式的内容(仅输出JSON字符串,无任何多余文字):
+
+1. 字段规范:
+   - type:账单类型,仅允许取值 'expense'(支出)或 'income'(收入)
+   - category:账单类别名称,必须与以下列表严格匹配:
+     支出类别:餐饮美食、交通出行、日用百货、购物消费、居家生活、休闲娱乐、医疗健康、通讯话费、教育学习、人情往来、美容美发、其他支出
+     收入类别:工资薪酬、奖金奖励、投资理财、兼职副业、报销款、其他收入
+    - amount:金额,数值类型(保留2位小数)
+   - date:日期,格式为 'YYYY-MM-DD'(例如 2024-06-01)
+   - remark:备注,字符串类型(10~50字,简要描述账单原因)
+
+2. 逻辑约束:
+   - category 必须与 type 匹配(支出类别对应 type=expense,收入类别对应 type=income)
+   - 所有字段不可缺失、不可为空
+
+示例输出:
+{"type":"expense","category":"餐饮美食","amount":89.90,"date":"2024-06-01","remark":"晚餐和朋友吃火锅,人均89.9元"}
+""";

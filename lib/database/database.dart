@@ -1,5 +1,6 @@
 import 'package:ai_accounting/const.dart';
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 part 'database.g.dart';
@@ -36,6 +37,7 @@ class Transactions extends Table {
 @DriftDatabase(tables: [Transactions])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.inMemory() : super(inMemoryConnection.executor);
 
   @override
   int get schemaVersion => 1;
@@ -109,6 +111,10 @@ QueryExecutor _openConnection() {
     name: 'ai_accounting',
     native: DriftNativeOptions(shareAcrossIsolates: true),
   );
+}
+
+DatabaseConnection get inMemoryConnection {
+  return DatabaseConnection(NativeDatabase.memory());
 }
 
 final appDatabase = AppDatabase();

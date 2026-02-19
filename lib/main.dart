@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:ai_accounting/const.dart';
+import 'package:ai_accounting/database/database.dart';
 import 'package:ai_accounting/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -42,20 +45,72 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final List<Transaction> _transactions = [];
+  double _totalIncome = 0;
+  double _totalExpense = 0;
+  StreamSubscription<List<TransactionEntity>>? _transactionsSubscription;
 
-  void _addTransaction(Transaction transaction) {
+  @override
+  void initState() {
+    super.initState();
+    _transactionsSubscription = appDatabase.watchAllTransactions().listen(
+      (entities) {
+        setState(() {
+          _transactions.clear();
+          _transactions.addAll(
+            entities.map(_entityToTransaction).toList(),
+          );
+        });
+        _updateTotals();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _transactionsSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _updateTotals() async {
+    final income = await appDatabase.getTotalIncome();
+    final expense = await appDatabase.getTotalExpense();
     setState(() {
-      _transactions.insert(0, transaction);
+      _totalIncome = income;
+      _totalExpense = expense;
     });
   }
 
-  double get _totalIncome => _transactions
-      .where((t) => t.type == CategoryType.income)
-      .fold(0, (sum, t) => sum + t.amount);
+  Future<void> _addTransaction(Transaction transaction) async {
+    await appDatabase.insertTransaction(
+      TransactionsCompanion.insert(
+        id: transaction.id,
+        categoryName: transaction.category.name,
+        categoryIcon: transaction.category.icon.codePoint,
+        categoryType: transaction.type.index,
+        amount: transaction.amount,
+        transactionTime: transaction.dateTime,
+      ),
+    );
+  }
 
-  double get _totalExpense => _transactions
-      .where((t) => t.type == CategoryType.expense)
-      .fold(0, (sum, t) => sum + t.amount);
+  Transaction _entityToTransaction(TransactionEntity entity) {
+    final categoryType = CategoryType.values[entity.categoryType];
+    final categories = categoryType == CategoryType.expense
+        ? Category.expenses
+        : Category.incomes;
+    final category = categories.firstWhere(
+      (c) => c.name == entity.categoryName,
+      orElse: () => Category.otherExpense,
+    );
+
+    return Transaction(
+      id: entity.id,
+      category: category,
+      type: categoryType,
+      amount: entity.amount,
+      dateTime: entity.transactionTime,
+    );
+  }
 
   String _formatDate(DateTime dt) {
     final now = DateTime.now();

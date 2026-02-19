@@ -4,16 +4,14 @@ import 'package:flutter/material.dart';
 
 class Transaction {
   final String id;
-  final String categoryName;
-  final IconData categoryIcon;
+  final Category category;
   final CategoryType type;
   final double amount;
   final DateTime dateTime;
 
   Transaction({
     required this.id,
-    required this.categoryName,
-    required this.categoryIcon,
+    required this.category,
     required this.type,
     required this.amount,
     required this.dateTime,
@@ -227,10 +225,10 @@ class _HomePageState extends State<HomePage> {
                         final isExpense = t.type == CategoryType.expense;
                         return ListTile(
                           leading: Icon(
-                            t.categoryIcon,
+                            t.category.icon,
                             color: context.colorScheme.primary,
                           ),
-                          title: Text(t.categoryName),
+                          title: Text(t.category.name),
                           subtitle: Text(_formatDate(t.dateTime)),
                           trailing: Text(
                             '${isExpense ? '-' : '+'} ¥ ${t.amount.toStringAsFixed(2)}',
@@ -274,7 +272,7 @@ class AddTransactionPanel extends StatefulWidget {
 
 class _AddTransactionPanelState extends State<AddTransactionPanel> {
   CategoryType _selectedType = CategoryType.expense;
-  AppCategory? _selectedCategory;
+  Category? _selectedCategory;
   final TextEditingController _amountController = TextEditingController();
 
   @override
@@ -289,8 +287,7 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
 
     final transaction = Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      categoryName: _selectedCategory!.name,
-      categoryIcon: _selectedCategory!.icon,
+      category: _selectedCategory!,
       type: _selectedType,
       amount: amount,
       dateTime: DateTime.now(),
@@ -303,9 +300,8 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
   @override
   Widget build(BuildContext context) {
     final categories = _selectedType == CategoryType.expense
-        ? expenseCategories
-        : incomeCategories;
-
+        ? Category.expenses
+        : Category.incomes;
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(

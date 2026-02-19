@@ -36,26 +36,7 @@ class ChatRequest {
       'model': model,
       'messages': messages.map((m) => m.toJson()).toList(),
     };
-    if (enableThinking) {
-      map['enable_thinking'] = enableThinking;
-    }
-    // map['response_format'] = {
-    //   'type': 'json_schema',
-    //   'json_schema': {
-    //     'type': 'object',
-    //     'properties': {
-    //       'type': {
-    //         'type': 'string',
-    //         'enum': ['expense', 'income'],
-    //       },
-    //       'category': {'type': 'string'},
-    //       'amount': {'type': 'number'},
-    //       'date': {'type': 'string'},
-    //       'remark': {'type': 'string'},
-    //     },
-    //     'required': ['type', 'category', 'amount', 'date', 'remark'],
-    //   },
-    // };
+    map['enable_thinking'] = enableThinking;
     map['response_format'] = {'type': 'json_object'};
     return map;
   }
@@ -139,6 +120,7 @@ Future<String> chat(String input) async {
       ChatMessage(role: 'system', content: aiPrompt),
       ChatMessage(role: 'user', content: input),
     ],
+    enableThinking: false,
   );
 
   final response = await http.post(

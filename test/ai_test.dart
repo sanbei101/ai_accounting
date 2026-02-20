@@ -34,8 +34,8 @@ void main() {
       final String type = billData['type'];
       final String categoryName = billData['category'];
       final List<String> validCategoryNames = type == 'expense'
-          ? Category.expenses.map((e) => e.name).toList()
-          : Category.incomes.map((e) => e.name).toList();
+          ? expenseCategories.map((e) => e.name).toList()
+          : incomeCategories.map((e) => e.name).toList();
 
       expect(validCategoryNames.contains(categoryName), true);
     });

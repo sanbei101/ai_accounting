@@ -79,8 +79,8 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
   @override
   Widget build(BuildContext context) {
     final categories = _selectedType == CategoryType.expense
-        ? Category.expenses
-        : Category.incomes;
+        ? expenseCategories
+        : incomeCategories;
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
       decoration: BoxDecoration(

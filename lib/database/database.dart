@@ -102,10 +102,10 @@ class AppDatabase extends _$AppDatabase {
 
   static final Map<(CategoryType, String), Category> categoryMap = () {
     final map = <(CategoryType, String), Category>{};
-    for (final c in Category.expenses) {
+    for (final c in expenseCategories) {
       map[(CategoryType.expense, c.name)] = c;
     }
-    for (final c in Category.incomes) {
+    for (final c in incomeCategories) {
       map[(CategoryType.income, c.name)] = c;
     }
     return map;

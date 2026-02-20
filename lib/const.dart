@@ -57,13 +57,15 @@ enum Category {
   final CategoryType type;
 
   const Category({required this.name, required this.icon, required this.type});
-
-  static List<Category> get expenses =>
-      Category.values.where((c) => c.type == CategoryType.expense).toList();
-
-  static List<Category> get incomes =>
-      Category.values.where((c) => c.type == CategoryType.income).toList();
 }
+
+final List<Category> expenseCategories = Category.values
+    .where((c) => c.type == CategoryType.expense)
+    .toList();
+
+final List<Category> incomeCategories = Category.values
+    .where((c) => c.type == CategoryType.income)
+    .toList();
 
 const aiPrompt = """
 请你模拟生成一条账单记录,严格按照以下要求输出JSON格式的内容(仅输出JSON字符串,无任何多余文字):

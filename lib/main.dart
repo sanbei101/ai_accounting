@@ -43,7 +43,10 @@ class _HomePageState extends State<HomePage> {
     ) {
       setState(() {
         _transactions.clear();
-        _transactions.addAll(entities.map(AppDatabase.entityToTransaction).toList());
+        _transactions.addAll(
+          entities.map(AppDatabase.entityToTransaction).toList(),
+        );
+        _transactions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
       });
       _updateTotals();
     });

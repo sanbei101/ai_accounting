@@ -27,16 +27,9 @@ class Transaction {
         : CategoryType.income;
 
     final categoryName = json['category'] as String;
-    final categories = type == CategoryType.expense
-        ? Category.expenses
-        : Category.incomes;
-    final category = categories.firstWhere(
-      (c) => c.name == categoryName,
-      orElse: () => categories.first,
-    );
-
+    final category =
+        AppDatabase.categoryMap[(type, categoryName)] ?? Category.otherExpense;
     final amount = double.parse(json['amount'].toString());
-
     final dateStr = json['date'] as String;
     final dateTime = DateTime.parse(dateStr);
 
@@ -107,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
     return result;
   }
 
-  static final Map<(CategoryType, String), Category> _categoryMap = () {
+  static final Map<(CategoryType, String), Category> categoryMap = () {
     final map = <(CategoryType, String), Category>{};
     for (final c in Category.expenses) {
       map[(CategoryType.expense, c.name)] = c;
@@ -122,7 +115,7 @@ class AppDatabase extends _$AppDatabase {
     final categoryType = CategoryType.values[entity.categoryType];
 
     final category =
-        _categoryMap[(categoryType, entity.categoryName)] ??
+        categoryMap[(categoryType, entity.categoryName)] ??
         Category.otherExpense;
 
     return Transaction(

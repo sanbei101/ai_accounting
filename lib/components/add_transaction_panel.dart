@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ai_accounting/ai.dart';
 import 'package:ai_accounting/const.dart';
 import 'package:ai_accounting/database/database.dart';
 import 'package:ai_accounting/theme.dart';
@@ -16,11 +19,61 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
   CategoryType _selectedType = CategoryType.expense;
   Category? _selectedCategory;
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _aiInputController = TextEditingController();
+  bool _isLoadingAI = false;
 
   @override
   void dispose() {
     _amountController.dispose();
+    _aiInputController.dispose();
     super.dispose();
+  }
+
+  Future<void> _parseWithAI() async {
+    final input = _aiInputController.text.trim();
+    if (input.isEmpty) return;
+
+    setState(() {
+      _isLoadingAI = true;
+    });
+
+    try {
+      final response = await chat(input);
+      final data = jsonDecode(response) as Map<String, dynamic>;
+
+      // 解析type
+      final typeStr = data['type'] as String;
+      final type = typeStr == 'expense' ? CategoryType.expense : CategoryType.income;
+
+      // 解析category
+      final categoryName = data['category'] as String;
+      final categories = type == CategoryType.expense ? Category.expenses : Category.incomes;
+      final category = categories.firstWhere(
+        (c) => c.name == categoryName,
+        orElse: () => categories.first,
+      );
+
+      // 解析amount
+      final amount = double.parse(data['amount'].toString());
+
+      setState(() {
+        _selectedType = type;
+        _selectedCategory = category;
+        _amountController.text = amount.toStringAsFixed(2);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI解析失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingAI = false;
+        });
+      }
+    }
   }
 
   void _saveTransaction() {
@@ -83,6 +136,58 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
               ],
             ),
           ),
+          // AI输入区域
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI智能记账',
+                  style: context.textTheme.titleMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _aiInputController,
+                        enabled: !_isLoadingAI,
+                        decoration: InputDecoration(
+                          hintText: '例: 早餐吃包子12元',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: context.colorScheme.surfaceContainerHighest,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton.tonalIcon(
+                      onPressed: _isLoadingAI ? null : _parseWithAI,
+                      icon: _isLoadingAI
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.auto_awesome),
+                      label: const Text('解析'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           // Type selector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),

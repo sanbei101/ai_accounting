@@ -42,9 +42,7 @@ class _HomePageState extends State<HomePage> {
       entities,
     ) {
       setState(() {
-        _transactions = entities
-            .map(AppDatabase.entityToTransaction)
-            .toList()
+        _transactions = entities.map(AppDatabase.entityToTransaction).toList()
           ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
       });
       _updateTotals();
@@ -234,6 +232,7 @@ class _HomePageState extends State<HomePage> {
                         final t = _transactions[index];
                         final isExpense = t.type == CategoryType.expense;
                         return ListTile(
+                          key: ValueKey(t.id),
                           leading: Icon(
                             t.category.icon,
                             color: context.colorScheme.primary,

@@ -41,13 +41,16 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
       final response = await chat(input);
       final data = jsonDecode(response) as Map<String, dynamic>;
 
-      // 解析type
       final typeStr = data['type'] as String;
-      final type = typeStr == 'expense' ? CategoryType.expense : CategoryType.income;
+      final type = typeStr == 'expense'
+          ? CategoryType.expense
+          : CategoryType.income;
 
       // 解析category
       final categoryName = data['category'] as String;
-      final categories = type == CategoryType.expense ? Category.expenses : Category.incomes;
+      final categories = type == CategoryType.expense
+          ? Category.expenses
+          : Category.incomes;
       final category = categories.firstWhere(
         (c) => c.name == categoryName,
         orElse: () => categories.first,
@@ -63,16 +66,14 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI解析失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('AI解析失败: $e')));
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingAI = false;
-        });
-      }
+      setState(() {
+        _isLoadingAI = false;
+      });
     }
   }
 
@@ -98,7 +99,7 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
         ? Category.expenses
         : Category.incomes;
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.75,
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -119,7 +120,7 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
           ),
           // Header
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               children: [
                 Text(
@@ -136,145 +137,142 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
               ],
             ),
           ),
-          // AI输入区域
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'AI智能记账',
-                  style: context.textTheme.titleMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+          // 可滚动内容区域
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // AI输入区域
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI智能记账',
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _aiInputController,
+                              enabled: !_isLoadingAI,
+                              decoration: InputDecoration(
+                                hintText: '例: 早餐吃包子12元',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                filled: true,
+                                fillColor:
+                                    context.colorScheme.surfaceContainerHighest,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          FilledButton.tonalIcon(
+                            onPressed: _isLoadingAI ? null : _parseWithAI,
+                            icon: _isLoadingAI
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child:
+                                        CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.auto_awesome),
+                            label: const Text('解析'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _aiInputController,
-                        enabled: !_isLoadingAI,
+                  const SizedBox(height: 16),
+                  // Type selector
+                  SegmentedButton<CategoryType>(
+                    segments: const [
+                      ButtonSegment(
+                        value: CategoryType.expense,
+                        label: Text('支出'),
+                        icon: Icon(Icons.arrow_downward, size: 18),
+                      ),
+                      ButtonSegment(
+                        value: CategoryType.income,
+                        label: Text('收入'),
+                        icon: Icon(Icons.arrow_upward, size: 18),
+                      ),
+                    ],
+                    selected: {_selectedType},
+                    onSelectionChanged: (Set<CategoryType> newSelection) {
+                      setState(() {
+                        _selectedType = newSelection.first;
+                        _selectedCategory = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  // Amount input
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '金额',
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: context.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                         decoration: InputDecoration(
-                          hintText: '例: 早餐吃包子12元',
+                          prefixText: '¥ ',
+                          prefixStyle:
+                              context.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          hintText: '0.00',
+                          hintStyle:
+                              context.textTheme.headlineMedium?.copyWith(
+                            color: context
+                                .colorScheme.onSurfaceVariant
+                                .withAlpha(100),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
                           fillColor: context.colorScheme.surfaceContainerHighest,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    FilledButton.tonalIcon(
-                      onPressed: _isLoadingAI ? null : _parseWithAI,
-                      icon: _isLoadingAI
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.auto_awesome),
-                      label: const Text('解析'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Type selector
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SegmentedButton<CategoryType>(
-              segments: const [
-                ButtonSegment(
-                  value: CategoryType.expense,
-                  label: Text('支出'),
-                  icon: Icon(Icons.arrow_downward, size: 18),
-                ),
-                ButtonSegment(
-                  value: CategoryType.income,
-                  label: Text('收入'),
-                  icon: Icon(Icons.arrow_upward, size: 18),
-                ),
-              ],
-              selected: {_selectedType},
-              onSelectionChanged: (Set<CategoryType> newSelection) {
-                setState(() {
-                  _selectedType = newSelection.first;
-                  _selectedCategory = null;
-                });
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Amount input
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '金额',
-                  style: context.textTheme.titleMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  style: context.textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    prefixText: '¥ ',
-                    prefixStyle: context.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    hintText: '0.00',
-                    hintStyle: context.textTheme.headlineLarge?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant.withAlpha(
-                        100,
+                  const SizedBox(height: 20),
+                  // Category selector
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '分类',
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: context.colorScheme.surfaceContainerHighest,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Category selector
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '分类',
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Wrap(
+                      const SizedBox(height: 12),
+                      Wrap(
                         spacing: 12,
                         runSpacing: 12,
                         children: categories.map((category) {
@@ -304,8 +302,8 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                                       size: 20,
                                       color: isSelected
                                           ? context
-                                                .colorScheme
-                                                .onPrimaryContainer
+                                              .colorScheme
+                                              .onPrimaryContainer
                                           : context.colorScheme.onSurface,
                                     ),
                                     const SizedBox(width: 8),
@@ -313,12 +311,12 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                                       category.name,
                                       style: context.textTheme.bodyLarge
                                           ?.copyWith(
-                                            color: isSelected
-                                                ? context
-                                                      .colorScheme
-                                                      .onPrimaryContainer
-                                                : context.colorScheme.onSurface,
-                                          ),
+                                        color: isSelected
+                                            ? context
+                                                .colorScheme
+                                                .onPrimaryContainer
+                                            : context.colorScheme.onSurface,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -327,8 +325,9 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                           );
                         }).toList(),
                       ),
-                    ),
+                    ],
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

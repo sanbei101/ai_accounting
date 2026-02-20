@@ -113,11 +113,15 @@ class ChatUsage {
   }
 }
 
-Future<String> chat(String input) async {
+Future<String> chat(String input, {DateTime? currentDate}) async {
+  final dateStr = currentDate?.toIso8601String().split('T').first ??
+      DateTime.now().toIso8601String().split('T').first;
+  final promptWithDate = '$aiPrompt\n\n当前日期: $dateStr';
+
   final request = ChatRequest(
     model: 'qwen3.5-plus',
     messages: [
-      ChatMessage(role: 'system', content: aiPrompt),
+      ChatMessage(role: 'system', content: promptWithDate),
       ChatMessage(role: 'user', content: input),
     ],
     enableThinking: false,

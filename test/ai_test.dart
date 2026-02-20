@@ -69,30 +69,5 @@ void main() {
       expect(remark.length, greaterThanOrEqualTo(10));
       expect(remark.length, lessThanOrEqualTo(50));
     });
-
-    test('完整验证账单数据结构', () async {
-      final aiResponse = await chat(prompt);
-      final Map<String, dynamic> billData = jsonDecode(aiResponse);
-
-      // 验证类型
-      final String type = billData['type'];
-      expect(['expense', 'income'].contains(type), true);
-
-      // 验证类别
-      final String categoryName = billData['category'];
-      final List<String> validCategoryNames = type == 'expense'
-          ? Category.expenses.map((e) => e.name).toList()
-          : Category.incomes.map((e) => e.name).toList();
-      expect(validCategoryNames.contains(categoryName), true);
-
-      // 验证日期
-      final String date = billData['date'];
-      expect(RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date), true);
-
-      // 验证备注
-      final String remark = billData['remark'];
-      expect(remark.length, greaterThanOrEqualTo(10));
-      expect(remark.length, lessThanOrEqualTo(50));
-    });
   });
 }

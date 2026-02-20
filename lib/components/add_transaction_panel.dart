@@ -40,29 +40,12 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
     try {
       final response = await chat(input);
       final data = jsonDecode(response) as Map<String, dynamic>;
-
-      final typeStr = data['type'] as String;
-      final type = typeStr == 'expense'
-          ? CategoryType.expense
-          : CategoryType.income;
-
-      // 解析category
-      final categoryName = data['category'] as String;
-      final categories = type == CategoryType.expense
-          ? Category.expenses
-          : Category.incomes;
-      final category = categories.firstWhere(
-        (c) => c.name == categoryName,
-        orElse: () => categories.first,
-      );
-
-      // 解析amount
-      final amount = double.parse(data['amount'].toString());
+      final transaction = Transaction.fromJson(data);
 
       setState(() {
-        _selectedType = type;
-        _selectedCategory = category;
-        _amountController.text = amount.toStringAsFixed(2);
+        _selectedType = transaction.type;
+        _selectedCategory = transaction.category;
+        _amountController.text = transaction.amount.toStringAsFixed(2);
       });
     } catch (e) {
       if (mounted) {
@@ -184,8 +167,9 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child:
-                                        CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Icon(Icons.auto_awesome),
                             label: const Text('解析'),
@@ -239,15 +223,11 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                         ),
                         decoration: InputDecoration(
                           prefixText: '¥ ',
-                          prefixStyle:
-                              context.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          prefixStyle: context.textTheme.headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           hintText: '0.00',
-                          hintStyle:
-                              context.textTheme.headlineMedium?.copyWith(
-                            color: context
-                                .colorScheme.onSurfaceVariant
+                          hintStyle: context.textTheme.headlineMedium?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant
                                 .withAlpha(100),
                           ),
                           border: OutlineInputBorder(
@@ -255,7 +235,8 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: context.colorScheme.surfaceContainerHighest,
+                          fillColor:
+                              context.colorScheme.surfaceContainerHighest,
                         ),
                       ),
                     ],
@@ -302,8 +283,8 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                                       size: 20,
                                       color: isSelected
                                           ? context
-                                              .colorScheme
-                                              .onPrimaryContainer
+                                                .colorScheme
+                                                .onPrimaryContainer
                                           : context.colorScheme.onSurface,
                                     ),
                                     const SizedBox(width: 8),
@@ -311,12 +292,12 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                                       category.name,
                                       style: context.textTheme.bodyLarge
                                           ?.copyWith(
-                                        color: isSelected
-                                            ? context
-                                                .colorScheme
-                                                .onPrimaryContainer
-                                            : context.colorScheme.onSurface,
-                                      ),
+                                            color: isSelected
+                                                ? context
+                                                      .colorScheme
+                                                      .onPrimaryContainer
+                                                : context.colorScheme.onSurface,
+                                          ),
                                     ),
                                   ],
                                 ),

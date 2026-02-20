@@ -19,6 +19,35 @@ class Transaction {
     required this.amount,
     required this.dateTime,
   });
+
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type'] as String;
+    final type = typeStr == 'expense'
+        ? CategoryType.expense
+        : CategoryType.income;
+
+    final categoryName = json['category'] as String;
+    final categories = type == CategoryType.expense
+        ? Category.expenses
+        : Category.incomes;
+    final category = categories.firstWhere(
+      (c) => c.name == categoryName,
+      orElse: () => categories.first,
+    );
+
+    final amount = double.parse(json['amount'].toString());
+
+    final dateStr = json['date'] as String;
+    final dateTime = DateTime.parse(dateStr);
+
+    return Transaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      category: category,
+      type: type,
+      amount: amount,
+      dateTime: dateTime,
+    );
+  }
 }
 
 @DataClassName('TransactionEntity')

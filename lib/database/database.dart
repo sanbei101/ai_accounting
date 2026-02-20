@@ -100,6 +100,26 @@ class AppDatabase extends _$AppDatabase {
     return result;
   }
 
+  Future<(double income, double expense)> getTotals() async {
+    final incomeExpr = transactions.amount.sum();
+    final expenseExpr = transactions.amount.sum();
+
+    final incomeQuery = selectOnly(transactions)
+      ..addColumns([incomeExpr])
+      ..where(transactions.categoryType.equals(CategoryType.income.index));
+
+    final expenseQuery = selectOnly(transactions)
+      ..addColumns([expenseExpr])
+      ..where(transactions.categoryType.equals(CategoryType.expense.index));
+
+    final results = await Future.wait([
+      incomeQuery.map((row) => row.read(incomeExpr) ?? 0.0).getSingle(),
+      expenseQuery.map((row) => row.read(expenseExpr) ?? 0.0).getSingle(),
+    ]);
+
+    return (results[0], results[1]);
+  }
+
   static final Map<(CategoryType, String), Category> categoryMap = () {
     final map = <(CategoryType, String), Category>{};
     for (final c in expenseCategories) {

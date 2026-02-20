@@ -6,6 +6,56 @@ import 'package:ai_accounting/database/database.dart';
 import 'package:ai_accounting/theme.dart';
 import 'package:flutter/material.dart';
 
+class _CategoryItem extends StatelessWidget {
+  final Category category;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryItem({
+    required this.category,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Card(
+        color: isSelected
+            ? context.colorScheme.primaryContainer
+            : context.colorScheme.surfaceContainerLow,
+        elevation: 0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                category.icon,
+                size: 20,
+                color: isSelected
+                    ? context.colorScheme.onPrimaryContainer
+                    : context.colorScheme.onSurface,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                category.name,
+                style: context.textTheme.bodyLarge?.copyWith(
+                  color: isSelected
+                      ? context.colorScheme.onPrimaryContainer
+                      : context.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AddTransactionPanel extends StatefulWidget {
   final Function(Transaction) onAdd;
 
@@ -256,55 +306,18 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
-                        children: categories.map((category) {
-                          final isSelected = _selectedCategory == category;
-                          return InkWell(
-                            onTap: () {
-                              setState(() {
-                                _selectedCategory = category;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Card(
-                              color: isSelected
-                                  ? context.colorScheme.primaryContainer
-                                  : context.colorScheme.surfaceContainerLow,
-                              elevation: 0,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      category.icon,
-                                      size: 20,
-                                      color: isSelected
-                                          ? context
-                                                .colorScheme
-                                                .onPrimaryContainer
-                                          : context.colorScheme.onSurface,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      category.name,
-                                      style: context.textTheme.bodyLarge
-                                          ?.copyWith(
-                                            color: isSelected
-                                                ? context
-                                                      .colorScheme
-                                                      .onPrimaryContainer
-                                                : context.colorScheme.onSurface,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                        children: [
+                          for (final category in categories)
+                            _CategoryItem(
+                              category: category,
+                              isSelected: _selectedCategory == category,
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = category;
+                                });
+                              },
                             ),
-                          );
-                        }).toList(),
+                        ],
                       ),
                     ],
                   ),

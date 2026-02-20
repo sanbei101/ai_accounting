@@ -30,7 +30,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List<Transaction> _transactions = [];
+  List<Transaction> _transactions = [];
   double _totalIncome = 0;
   double _totalExpense = 0;
   StreamSubscription<List<TransactionEntity>>? _transactionsSubscription;
@@ -42,11 +42,10 @@ class _HomePageState extends State<HomePage> {
       entities,
     ) {
       setState(() {
-        _transactions.clear();
-        _transactions.addAll(
-          entities.map(AppDatabase.entityToTransaction).toList(),
-        );
-        _transactions.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        _transactions = entities
+            .map(AppDatabase.entityToTransaction)
+            .toList()
+          ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
       });
       _updateTotals();
     });
@@ -59,8 +58,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _updateTotals() async {
-    final income = await appDatabase.getTotalIncome();
-    final expense = await appDatabase.getTotalExpense();
+    final (income, expense) = await appDatabase.getTotals();
     setState(() {
       _totalIncome = income;
       _totalExpense = expense;

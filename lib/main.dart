@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:ai_accounting/components/add_transaction_panel.dart';
-import 'package:ai_accounting/const.dart';
+import 'package:ai_accounting/components/transaction_timeline_tile.dart';
 import 'package:ai_accounting/database/database.dart';
 import 'package:ai_accounting/theme.dart';
-import 'package:ai_accounting/utils.dart' as utils;
 import 'package:flutter/material.dart';
 
 void main() => runApp(const MyApp());
@@ -217,6 +216,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 24),
             Text('最近账单', style: context.textTheme.titleLarge),
+            const SizedBox(height: 24),
             Expanded(
               child: _transactions.isEmpty
                   ? Center(
@@ -230,24 +230,9 @@ class _HomePageState extends State<HomePage> {
                   : ListView.builder(
                       itemCount: _transactions.length,
                       itemBuilder: (context, index) {
-                        final t = _transactions[index];
-                        final isExpense = t.type == CategoryType.expense;
-                        return ListTile(
-                          key: ValueKey(t.id),
-                          leading: Icon(
-                            t.category.icon,
-                            color: context.colorScheme.primary,
-                          ),
-                          title: Text(t.category.name),
-                          subtitle: Text(utils.formatDate(t.dateTime)),
-                          trailing: Text(
-                            '${isExpense ? '-' : '+'} ¥ ${t.amount.toStringAsFixed(2)}',
-                            style: context.textTheme.titleMedium?.copyWith(
-                              color: isExpense
-                                  ? context.colorScheme.error
-                                  : context.colorScheme.primary,
-                            ),
-                          ),
+                        return TransactionTimelineTile(
+                          transaction: _transactions[index],
+                          isLast: index == _transactions.length - 1,
                         );
                       },
                     ),

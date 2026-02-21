@@ -120,6 +120,7 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
       type: _selectedType,
       amount: amount,
       dateTime: DateTime.now(),
+      remark: _aiInputController.text.trim(),
     );
 
     widget.onAdd(transaction);

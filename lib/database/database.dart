@@ -11,6 +11,7 @@ class Transaction {
   final CategoryType type;
   final double amount;
   final DateTime dateTime;
+  final String remark;
 
   Transaction({
     required this.id,
@@ -18,6 +19,7 @@ class Transaction {
     required this.type,
     required this.amount,
     required this.dateTime,
+    required this.remark,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class Transaction {
     final amount = double.parse(json['amount'].toString());
     final dateStr = json['date'] as String;
     final dateTime = DateTime.parse(dateStr);
+    final remark = json['remark'] as String;
 
     return Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -39,6 +42,7 @@ class Transaction {
       type: type,
       amount: amount,
       dateTime: dateTime,
+      remark: remark,
     );
   }
 }
@@ -51,6 +55,7 @@ class Transactions extends Table {
   IntColumn get categoryType => integer()();
   RealColumn get amount => real()();
   DateTimeColumn get transactionTime => dateTime()();
+  TextColumn get remark => text()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -144,6 +149,7 @@ class AppDatabase extends _$AppDatabase {
       type: categoryType,
       amount: entity.amount,
       dateTime: entity.transactionTime,
+      remark: entity.remark,
     );
   }
 }

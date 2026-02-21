@@ -72,6 +72,15 @@ class $TransactionsTable extends Transactions
         type: DriftSqlType.dateTime,
         requiredDuringInsert: true,
       );
+  static const VerificationMeta _remarkMeta = const VerificationMeta('remark');
+  @override
+  late final GeneratedColumn<String> remark = GeneratedColumn<String>(
+    'remark',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -80,6 +89,7 @@ class $TransactionsTable extends Transactions
     categoryType,
     amount,
     transactionTime,
+    remark,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -150,6 +160,14 @@ class $TransactionsTable extends Transactions
     } else if (isInserting) {
       context.missing(_transactionTimeMeta);
     }
+    if (data.containsKey('remark')) {
+      context.handle(
+        _remarkMeta,
+        remark.isAcceptableOrUnknown(data['remark']!, _remarkMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_remarkMeta);
+    }
     return context;
   }
 
@@ -183,6 +201,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.dateTime,
         data['${effectivePrefix}transaction_time'],
       )!,
+      remark: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remark'],
+      )!,
     );
   }
 
@@ -200,6 +222,7 @@ class TransactionEntity extends DataClass
   final int categoryType;
   final double amount;
   final DateTime transactionTime;
+  final String remark;
   const TransactionEntity({
     required this.id,
     required this.categoryName,
@@ -207,6 +230,7 @@ class TransactionEntity extends DataClass
     required this.categoryType,
     required this.amount,
     required this.transactionTime,
+    required this.remark,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -217,6 +241,7 @@ class TransactionEntity extends DataClass
     map['category_type'] = Variable<int>(categoryType);
     map['amount'] = Variable<double>(amount);
     map['transaction_time'] = Variable<DateTime>(transactionTime);
+    map['remark'] = Variable<String>(remark);
     return map;
   }
 
@@ -228,6 +253,7 @@ class TransactionEntity extends DataClass
       categoryType: Value(categoryType),
       amount: Value(amount),
       transactionTime: Value(transactionTime),
+      remark: Value(remark),
     );
   }
 
@@ -243,6 +269,7 @@ class TransactionEntity extends DataClass
       categoryType: serializer.fromJson<int>(json['categoryType']),
       amount: serializer.fromJson<double>(json['amount']),
       transactionTime: serializer.fromJson<DateTime>(json['transactionTime']),
+      remark: serializer.fromJson<String>(json['remark']),
     );
   }
   @override
@@ -255,6 +282,7 @@ class TransactionEntity extends DataClass
       'categoryType': serializer.toJson<int>(categoryType),
       'amount': serializer.toJson<double>(amount),
       'transactionTime': serializer.toJson<DateTime>(transactionTime),
+      'remark': serializer.toJson<String>(remark),
     };
   }
 
@@ -265,6 +293,7 @@ class TransactionEntity extends DataClass
     int? categoryType,
     double? amount,
     DateTime? transactionTime,
+    String? remark,
   }) => TransactionEntity(
     id: id ?? this.id,
     categoryName: categoryName ?? this.categoryName,
@@ -272,6 +301,7 @@ class TransactionEntity extends DataClass
     categoryType: categoryType ?? this.categoryType,
     amount: amount ?? this.amount,
     transactionTime: transactionTime ?? this.transactionTime,
+    remark: remark ?? this.remark,
   );
   TransactionEntity copyWithCompanion(TransactionsCompanion data) {
     return TransactionEntity(
@@ -289,6 +319,7 @@ class TransactionEntity extends DataClass
       transactionTime: data.transactionTime.present
           ? data.transactionTime.value
           : this.transactionTime,
+      remark: data.remark.present ? data.remark.value : this.remark,
     );
   }
 
@@ -300,7 +331,8 @@ class TransactionEntity extends DataClass
           ..write('categoryIcon: $categoryIcon, ')
           ..write('categoryType: $categoryType, ')
           ..write('amount: $amount, ')
-          ..write('transactionTime: $transactionTime')
+          ..write('transactionTime: $transactionTime, ')
+          ..write('remark: $remark')
           ..write(')'))
         .toString();
   }
@@ -313,6 +345,7 @@ class TransactionEntity extends DataClass
     categoryType,
     amount,
     transactionTime,
+    remark,
   );
   @override
   bool operator ==(Object other) =>
@@ -323,7 +356,8 @@ class TransactionEntity extends DataClass
           other.categoryIcon == this.categoryIcon &&
           other.categoryType == this.categoryType &&
           other.amount == this.amount &&
-          other.transactionTime == this.transactionTime);
+          other.transactionTime == this.transactionTime &&
+          other.remark == this.remark);
 }
 
 class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
@@ -333,6 +367,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
   final Value<int> categoryType;
   final Value<double> amount;
   final Value<DateTime> transactionTime;
+  final Value<String> remark;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.id = const Value.absent(),
@@ -341,6 +376,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
     this.categoryType = const Value.absent(),
     this.amount = const Value.absent(),
     this.transactionTime = const Value.absent(),
+    this.remark = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -350,13 +386,15 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
     required int categoryType,
     required double amount,
     required DateTime transactionTime,
+    required String remark,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        categoryName = Value(categoryName),
        categoryIcon = Value(categoryIcon),
        categoryType = Value(categoryType),
        amount = Value(amount),
-       transactionTime = Value(transactionTime);
+       transactionTime = Value(transactionTime),
+       remark = Value(remark);
   static Insertable<TransactionEntity> custom({
     Expression<String>? id,
     Expression<String>? categoryName,
@@ -364,6 +402,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
     Expression<int>? categoryType,
     Expression<double>? amount,
     Expression<DateTime>? transactionTime,
+    Expression<String>? remark,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -373,6 +412,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
       if (categoryType != null) 'category_type': categoryType,
       if (amount != null) 'amount': amount,
       if (transactionTime != null) 'transaction_time': transactionTime,
+      if (remark != null) 'remark': remark,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -384,6 +424,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
     Value<int>? categoryType,
     Value<double>? amount,
     Value<DateTime>? transactionTime,
+    Value<String>? remark,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -393,6 +434,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
       categoryType: categoryType ?? this.categoryType,
       amount: amount ?? this.amount,
       transactionTime: transactionTime ?? this.transactionTime,
+      remark: remark ?? this.remark,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -418,6 +460,9 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
     if (transactionTime.present) {
       map['transaction_time'] = Variable<DateTime>(transactionTime.value);
     }
+    if (remark.present) {
+      map['remark'] = Variable<String>(remark.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -433,6 +478,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionEntity> {
           ..write('categoryType: $categoryType, ')
           ..write('amount: $amount, ')
           ..write('transactionTime: $transactionTime, ')
+          ..write('remark: $remark, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -458,6 +504,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int categoryType,
       required double amount,
       required DateTime transactionTime,
+      required String remark,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -468,6 +515,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> categoryType,
       Value<double> amount,
       Value<DateTime> transactionTime,
+      Value<String> remark,
       Value<int> rowid,
     });
 
@@ -507,6 +555,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<DateTime> get transactionTime => $composableBuilder(
     column: $table.transactionTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remark => $composableBuilder(
+    column: $table.remark,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -549,6 +602,11 @@ class $$TransactionsTableOrderingComposer
     column: $table.transactionTime,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get remark => $composableBuilder(
+    column: $table.remark,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -585,6 +643,9 @@ class $$TransactionsTableAnnotationComposer
     column: $table.transactionTime,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get remark =>
+      $composableBuilder(column: $table.remark, builder: (column) => column);
 }
 
 class $$TransactionsTableTableManager
@@ -628,6 +689,7 @@ class $$TransactionsTableTableManager
                 Value<int> categoryType = const Value.absent(),
                 Value<double> amount = const Value.absent(),
                 Value<DateTime> transactionTime = const Value.absent(),
+                Value<String> remark = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
@@ -636,6 +698,7 @@ class $$TransactionsTableTableManager
                 categoryType: categoryType,
                 amount: amount,
                 transactionTime: transactionTime,
+                remark: remark,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -646,6 +709,7 @@ class $$TransactionsTableTableManager
                 required int categoryType,
                 required double amount,
                 required DateTime transactionTime,
+                required String remark,
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
@@ -654,6 +718,7 @@ class $$TransactionsTableTableManager
                 categoryType: categoryType,
                 amount: amount,
                 transactionTime: transactionTime,
+                remark: remark,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

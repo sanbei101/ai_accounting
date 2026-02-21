@@ -72,6 +72,7 @@ class _HomePageState extends State<HomePage> {
         categoryType: transaction.type.index,
         amount: transaction.amount,
         transactionTime: transaction.dateTime,
+        remark: transaction.remark,
       ),
     );
   }

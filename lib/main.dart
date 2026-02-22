@@ -46,171 +46,188 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 记账'),
+        scrolledUnderElevation: 0, // 保持之前说的，关掉变色
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.history)),
           IconButton(onPressed: () {}, icon: const Icon(Icons.person)),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              color: context.colorScheme.primaryContainer,
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '本月结余',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        color: context.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    Text(
-                      '¥ ${(income - expense).toStringAsFixed(2)}',
-                      style: context.textTheme.headlineLarge?.copyWith(
-                        color: context.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Card(
-                            color: context.colorScheme.secondaryContainer,
-                            elevation: 0,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.arrow_upward,
-                                        size: 16,
-                                        color: context
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '收入',
-                                        style: context.textTheme.bodySmall
-                                            ?.copyWith(
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Card(
+                    color: context.colorScheme.primaryContainer,
+                    elevation: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '本月结余',
+                            style: context.textTheme.titleMedium?.copyWith(
+                              color: context.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          Text(
+                            '¥ ${(income - expense).toStringAsFixed(2)}',
+                            style: context.textTheme.headlineLarge?.copyWith(
+                              color: context.colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Card(
+                                  color: context.colorScheme.secondaryContainer,
+                                  elevation: 0,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.arrow_upward,
+                                              size: 16,
                                               color: context
                                                   .colorScheme
                                                   .onSecondaryContainer,
                                             ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '¥ ${income.toStringAsFixed(2)}',
-                                    style: context.textTheme.titleMedium
-                                        ?.copyWith(
-                                          color: context
-                                              .colorScheme
-                                              .onSecondaryContainer,
-                                          fontWeight: FontWeight.bold,
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '收入',
+                                              style: context.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    color: context
+                                                        .colorScheme
+                                                        .onSecondaryContainer,
+                                                  ),
+                                            ),
+                                          ],
                                         ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '¥ ${income.toStringAsFixed(2)}',
+                                          style: context.textTheme.titleMedium
+                                              ?.copyWith(
+                                                color: context
+                                                    .colorScheme
+                                                    .onSecondaryContainer,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Card(
-                            color: context.colorScheme.secondaryContainer,
-                            elevation: 0,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.arrow_downward,
-                                        size: 16,
-                                        color: context
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '支出',
-                                        style: context.textTheme.bodySmall
-                                            ?.copyWith(
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Card(
+                                  color: context.colorScheme.secondaryContainer,
+                                  elevation: 0,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.arrow_downward,
+                                              size: 16,
                                               color: context
                                                   .colorScheme
                                                   .onSecondaryContainer,
                                             ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '¥ ${expense.toStringAsFixed(2)}',
-                                    style: context.textTheme.titleMedium
-                                        ?.copyWith(
-                                          color: context
-                                              .colorScheme
-                                              .onSecondaryContainer,
-                                          fontWeight: FontWeight.bold,
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '支出',
+                                              style: context.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    color: context
+                                                        .colorScheme
+                                                        .onSecondaryContainer,
+                                                  ),
+                                            ),
+                                          ],
                                         ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '¥ ${expense.toStringAsFixed(2)}',
+                                          style: context.textTheme.titleMedium
+                                              ?.copyWith(
+                                                color: context
+                                                    .colorScheme
+                                                    .onSecondaryContainer,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('最近账单', style: context.textTheme.titleLarge),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            Text('最近账单', style: context.textTheme.titleLarge),
-            const SizedBox(height: 24),
-            Expanded(
-              child: transactionsAsync.when(
-                data: (transactions) {
-                  if (transactions.isEmpty) {
-                    return Center(
-                      child: Text(
-                        '暂无账单',
-                        style: context.textTheme.bodyLarge?.copyWith(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
+          ),
+
+          transactionsAsync.when(
+            data: (transactions) {
+              if (transactions.isEmpty) {
+                return SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      '暂无账单',
+                      style: context.textTheme.bodyLarge?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                  ),
+                );
+              }
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList.builder(
+                  itemCount: transactions.length,
+                  itemBuilder: (context, index) {
+                    return TransactionTimelineTile(
+                      transaction: transactions[index],
+                      isLast: index == transactions.length - 1,
                     );
-                  }
-                  return ListView.builder(
-                    itemCount: transactions.length,
-                    itemBuilder: (context, index) {
-                      return TransactionTimelineTile(
-                        transaction: transactions[index],
-                        isLast: index == transactions.length - 1,
-                      );
-                    },
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, e) => const Center(child: Text('加载失败')),
-              ),
+                  },
+                ),
+              );
+            },
+            loading: () => const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
             ),
-          ],
-        ),
+            error: (_, e) =>
+                const SliverFillRemaining(child: Center(child: Text('加载失败'))),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

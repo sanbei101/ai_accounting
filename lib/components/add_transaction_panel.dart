@@ -150,6 +150,249 @@ class _ExpenseIncomeTab extends ConsumerWidget {
   }
 }
 
+class _CalculatorSection extends ConsumerWidget {
+  final Function({bool keepOpen}) onSave;
+  final VoidCallback onParseAI;
+  const _CalculatorSection({required this.onSave, required this.onParseAI});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final panelState = ref.watch(addPanelProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  Text(
+                    '¥',
+                    style: context.textTheme.headlineMedium?.copyWith(
+                      color: context.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      panelState.amount,
+                      style: context.textTheme.displaySmall?.copyWith(
+                        color: context.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _RemarkInput(onParseAI: onParseAI),
+            _Keypad(onSave: onSave),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RemarkInput extends ConsumerStatefulWidget {
+  final VoidCallback onParseAI;
+
+  const _RemarkInput({required this.onParseAI});
+
+  @override
+  ConsumerState<_RemarkInput> createState() => _RemarkInputState();
+}
+
+class _RemarkInputState extends ConsumerState<_RemarkInput> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: ref.read(addPanelProvider).remark,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final panelState = ref.watch(addPanelProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Icon(
+            Icons.edit_note,
+            color: context.colorScheme.onSurfaceVariant.withAlpha(150),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: '点击填写备注信息 支持AI智能记账)',
+                hintStyle: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant.withAlpha(150),
+                ),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              onChanged: (value) =>
+                  ref.read(addPanelProvider.notifier).setRemark(value),
+            ),
+          ),
+          IconButton(
+            onPressed: panelState.isAILoading ? null : widget.onParseAI,
+            icon: panelState.isAILoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(Icons.auto_awesome, color: context.colorScheme.primary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Keypad extends ConsumerWidget {
+  final Function({bool keepOpen}) onSave;
+
+  const _Keypad({required this.onSave});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    void handleInput(String text) {
+      ref.read(addPanelProvider.notifier).handleKeyTap(text);
+    }
+
+    return Container(
+      color: context.colorScheme.surfaceContainerHighest.withAlpha(100),
+      padding: const EdgeInsets.all(6),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _Key('1', onTap: () => handleInput('1')),
+              _Key('2', onTap: () => handleInput('2')),
+              _Key('3', onTap: () => handleInput('3')),
+              _Key(
+                '⌫',
+                isIcon: true,
+                icon: Icons.backspace_outlined,
+                onTap: () => handleInput('delete'),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              _Key('4', onTap: () => handleInput('4')),
+              _Key('5', onTap: () => handleInput('5')),
+              _Key('6', onTap: () => handleInput('6')),
+              _Key('+', onTap: () => handleInput('+')),
+            ],
+          ),
+          Row(
+            children: [
+              _Key('7', onTap: () => handleInput('7')),
+              _Key('8', onTap: () => handleInput('8')),
+              _Key('9', onTap: () => handleInput('9')),
+              _Key('-', onTap: () => handleInput('-')),
+            ],
+          ),
+          Row(
+            children: [
+              _Key('再记', onTap: () => onSave.call(keepOpen: true)),
+              _Key('0', onTap: () => handleInput('0')),
+              _Key('.', onTap: () => handleInput('.')),
+              _Key(
+                '完成',
+                isPrimary: true,
+                onTap: () => onSave.call(keepOpen: false),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Key extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  final bool isPrimary;
+  final bool isIcon;
+  final IconData? icon;
+
+  const _Key(
+    this.text, {
+    required this.onTap,
+    this.isPrimary = false,
+    this.isIcon = false,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Material(
+          color: isPrimary
+              ? context.colorScheme.primary
+              : context.colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 52,
+              alignment: Alignment.center,
+              child: isIcon
+                  ? Icon(icon, color: context.colorScheme.onSurface)
+                  : Text(
+                      text,
+                      style: context.textTheme.titleLarge?.copyWith(
+                        color: isPrimary
+                            ? context.colorScheme.onPrimary
+                            : context.colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AddTransactionPanel extends ConsumerStatefulWidget {
   final ValueChanged<Transaction> onAdd;
 
@@ -262,229 +505,8 @@ class _AddTransactionPanelState extends ConsumerState<AddTransactionPanel> {
         children: [
           dragHandle(context),
           const Expanded(child: _CategorySelectionComponent()),
-          const _CalculatorSection(),
+          _CalculatorSection(onSave: _saveTransaction, onParseAI: _parseWithAI),
         ],
-      ),
-    );
-  }
-}
-
-class _CalculatorSection extends ConsumerWidget {
-  const _CalculatorSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final panelState = ref.watch(addPanelProvider);
-    final panel = context.findAncestorStateOfType<_AddTransactionPanelState>();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
-                children: [
-                  Text(
-                    '¥',
-                    style: context.textTheme.headlineMedium?.copyWith(
-                      color: context.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      panelState.amount,
-                      style: context.textTheme.displaySmall?.copyWith(
-                        color: context.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            _RemarkInput(onParseAI: panel?._parseWithAI),
-            _Keypad(onSave: panel?._saveTransaction),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RemarkInput extends ConsumerStatefulWidget {
-  final VoidCallback? onParseAI;
-
-  const _RemarkInput({this.onParseAI});
-
-  @override
-  ConsumerState<_RemarkInput> createState() => _RemarkInputState();
-}
-
-class _RemarkInputState extends ConsumerState<_RemarkInput> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: ref.read(addPanelProvider).remark);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final panelState = ref.watch(addPanelProvider);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Icon(
-            Icons.edit_note,
-            color: context.colorScheme.onSurfaceVariant.withAlpha(150),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: '点击填写备注信息 支持AI智能记账)',
-                hintStyle: context.textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant.withAlpha(150),
-                ),
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              onChanged: (value) =>
-                  ref.read(addPanelProvider.notifier).setRemark(value),
-            ),
-          ),
-          IconButton(
-            onPressed: panelState.isAILoading ? null : widget.onParseAI,
-            icon: panelState.isAILoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(Icons.auto_awesome, color: context.colorScheme.primary),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-typedef SaveCallback = void Function({bool keepOpen});
-
-class _Keypad extends StatelessWidget {
-  final SaveCallback? onSave;
-
-  const _Keypad({this.onSave});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: context.colorScheme.surfaceContainerHighest.withAlpha(100),
-      padding: const EdgeInsets.all(6),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              _Key('1'),
-              _Key('2'),
-              _Key('3'),
-              _Key('⌫', isIcon: true, icon: Icons.backspace_outlined),
-            ],
-          ),
-          Row(children: [_Key('4'), _Key('5'), _Key('6'), _Key('+')]),
-          Row(children: [_Key('7'), _Key('8'), _Key('9'), _Key('-')]),
-          Row(
-            children: [
-              _Key('再记'),
-              _Key('0'),
-              _Key('.'),
-              _Key('完成', isPrimary: true),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Key extends ConsumerWidget {
-  final String text;
-  final bool isPrimary;
-  final bool isIcon;
-  final IconData? icon;
-
-  const _Key(
-    this.text, {
-    this.isPrimary = false,
-    this.isIcon = false,
-    this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final panel = context.findAncestorStateOfType<_AddTransactionPanelState>();
-
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: Material(
-          color: isPrimary
-              ? context.colorScheme.primary
-              : context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(8),
-          child: InkWell(
-            onTap: () => ref
-                .read(addPanelProvider.notifier)
-                .handleKeyTap(
-                  text,
-                  () => panel?._saveTransaction(),
-                  () => panel?._saveTransaction(keepOpen: true),
-                ),
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              height: 52,
-              alignment: Alignment.center,
-              child: isIcon
-                  ? Icon(icon, color: context.colorScheme.onSurface)
-                  : Text(
-                      text,
-                      style: context.textTheme.titleLarge?.copyWith(
-                        color: isPrimary
-                            ? context.colorScheme.onPrimary
-                            : context.colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-            ),
-          ),
-        ),
       ),
     );
   }

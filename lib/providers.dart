@@ -124,20 +124,8 @@ class AddPanelNotifier extends Notifier<AddPanelState> {
     state = state.copyWith(amount: amount);
   }
 
-  void handleKeyTap(
-    String key,
-    VoidCallback onSave,
-    VoidCallback onSaveAndNew,
-  ) {
-    if (key == '完成') {
-      onSave();
-      return;
-    }
-    if (key == '再记') {
-      onSaveAndNew();
-      return;
-    }
-    if (key == '⌫') {
+  void handleKeyTap(String key) {
+    if (key == 'delete') {
       _backspace();
       return;
     }

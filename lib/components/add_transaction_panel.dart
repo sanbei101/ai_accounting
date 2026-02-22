@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:ai_accounting/ai.dart';
 import 'package:ai_accounting/const.dart';
 import 'package:ai_accounting/database/database.dart';
+import 'package:ai_accounting/providers.dart';
 import 'package:ai_accounting/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class _CategoryItem extends StatelessWidget {
   final Category category;
@@ -341,27 +343,23 @@ class _CalculatorComponent extends StatelessWidget {
   }
 }
 
-class AddTransactionPanel extends StatefulWidget {
+class AddTransactionPanel extends ConsumerStatefulWidget {
   final ValueChanged<Transaction> onAdd;
 
   const AddTransactionPanel({super.key, required this.onAdd});
 
   @override
-  State<AddTransactionPanel> createState() => _AddTransactionPanelState();
+  ConsumerState<AddTransactionPanel> createState() =>
+      _AddTransactionPanelState();
 }
 
-class _AddTransactionPanelState extends State<AddTransactionPanel> {
-  CategoryType _selectedType = CategoryType.expense;
-  Category? _selectedCategory;
-  String _amountStr = '0.00';
-
-  final TextEditingController _aiInputController = TextEditingController();
-  bool _isLoadingAI = false;
+class _AddTransactionPanelState extends ConsumerState<AddTransactionPanel> {
+  late final TextEditingController _aiInputController;
 
   @override
   void initState() {
     super.initState();
-    _selectedCategory = expenseCategories.first;
+    _aiInputController = TextEditingController();
   }
 
   @override
@@ -374,21 +372,20 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
     final input = _aiInputController.text.trim();
     if (input.isEmpty) return;
 
-    setState(() {
-      _isLoadingAI = true;
-    });
+    ref.read(addPanelProvider.notifier).setAILoading(true);
 
     try {
       final response = await chat(input);
       final data = jsonDecode(response) as Map<String, dynamic>;
       final transaction = Transaction.fromJson(data);
 
-      setState(() {
-        _selectedType = transaction.type;
-        _selectedCategory = transaction.category;
-        _amountStr = transaction.amount.toStringAsFixed(2);
-      });
+      ref.read(addPanelProvider.notifier).setAILoading(false);
+      ref.read(addPanelProvider.notifier).setType(transaction.type);
+      ref.read(addPanelProvider.notifier).setCategory(transaction.category);
+      ref.read(addPanelProvider.notifier).setRemark(_aiInputController.text);
+      _updateAmount(transaction.amount.toStringAsFixed(2));
     } catch (e) {
+      ref.read(addPanelProvider.notifier).setAILoading(false);
       if (mounted) {
         showDialog(
           context: context,
@@ -404,47 +401,24 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
           ),
         );
       }
-    } finally {
-      setState(() {
-        _isLoadingAI = false;
-      });
     }
   }
 
-  void _evaluateMath() {
-    try {
-      if (_amountStr.contains('+')) {
-        final parts = _amountStr.split('+');
-        if (parts.length == 2 && parts[1].isNotEmpty) {
-          final sum =
-              (double.tryParse(parts[0]) ?? 0) +
-              (double.tryParse(parts[1]) ?? 0);
-          _amountStr = sum.toStringAsFixed(2);
-        }
-      } else if (_amountStr.contains('-')) {
-        final parts = _amountStr.split('-');
-        if (parts.length == 2 && parts[1].isNotEmpty) {
-          final diff =
-              (double.tryParse(parts[0]) ?? 0) -
-              (double.tryParse(parts[1]) ?? 0);
-          _amountStr = diff.toStringAsFixed(2);
-        }
-      }
-    } catch (_) {}
+  void _updateAmount(String newAmount) {
+    ref.read(addPanelProvider.notifier).setAmount(newAmount);
   }
 
   void _saveTransaction({bool keepOpen = false}) {
-    _evaluateMath();
+    final panelState = ref.read(addPanelProvider);
+    final amount = ref.read(evaluatedAmountProvider);
 
-    final amount = double.tryParse(_amountStr) ?? 0;
-
-    if (amount <= 0 || _selectedCategory == null) {
+    if (amount <= 0 || panelState.selectedCategory == null) {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('提示'),
           content: Text(
-            _selectedCategory == null ? '请先选择一个分类哦' : '请输入大于0的有效金额',
+            panelState.selectedCategory == null ? '请先选择一个分类哦' : '请输入大于0的有效金额',
           ),
           actions: [
             TextButton(
@@ -459,8 +433,8 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
 
     final transaction = Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      category: _selectedCategory!,
-      type: _selectedType,
+      category: panelState.selectedCategory!,
+      type: panelState.selectedType,
       amount: amount,
       dateTime: DateTime.now(),
       remark: _aiInputController.text.trim(),
@@ -469,75 +443,16 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
     widget.onAdd(transaction);
 
     if (keepOpen) {
-      setState(() {
-        _amountStr = '0.00';
-        _aiInputController.clear();
-      });
+      _aiInputController.clear();
+      ref.read(addPanelProvider.notifier).reset();
     } else {
       Navigator.pop(context);
     }
   }
 
-  void _handleKeyTap(String key) {
-    if (key == '完成') {
-      _saveTransaction();
-      return;
-    }
-    if (key == '再记') {
-      _saveTransaction(keepOpen: true);
-      return;
-    }
-    if (key == '⌫') {
-      setState(() {
-        if (_amountStr.length > 1) {
-          _amountStr = _amountStr.substring(0, _amountStr.length - 1);
-        } else {
-          _amountStr = '0.00';
-        }
-      });
-      return;
-    }
-
-    setState(() {
-      if (_amountStr == '0.00') {
-        if (key == '.') {
-          _amountStr = '0.';
-        } else if (key == '+' || key == '-') {
-          _amountStr = '0$key';
-        } else {
-          _amountStr = key;
-        }
-      } else {
-        final lastChar = _amountStr[_amountStr.length - 1];
-
-        if ((key == '+' || key == '-') &&
-            (lastChar == '+' || lastChar == '-' || lastChar == '.')) {
-          return;
-        }
-
-        if ((key == '+' || key == '-') &&
-            (_amountStr.contains('+') || _amountStr.contains('-'))) {
-          _evaluateMath();
-        }
-
-        if (key == '.') {
-          final parts = _amountStr.split(RegExp(r'[+-]'));
-          if (parts.last.contains('.')) return;
-        }
-
-        _amountStr += key;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final categories = _selectedType == CategoryType.expense
-        ? expenseCategories
-        : incomeCategories;
-    if (_selectedCategory != null && !categories.contains(_selectedCategory)) {
-      _selectedCategory = categories.isNotEmpty ? categories.first : null;
-    }
+    final panelState = ref.watch(addPanelProvider);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -560,26 +475,30 @@ class _AddTransactionPanelState extends State<AddTransactionPanel> {
           ),
           Expanded(
             child: _CategorySelectionComponent(
-              selectedType: _selectedType,
-              selectedCategory: _selectedCategory,
+              selectedType: panelState.selectedType,
+              selectedCategory: panelState.selectedCategory,
               onTypeChanged: (type) {
-                setState(() {
-                  _selectedType = type;
-                });
+                ref.read(addPanelProvider.notifier).setType(type);
               },
               onCategoryChanged: (category) {
-                setState(() {
-                  _selectedCategory = category;
-                });
+                ref.read(addPanelProvider.notifier).setCategory(category);
               },
             ),
           ),
           _CalculatorComponent(
-            amount: _amountStr,
+            amount: panelState.amount,
             aiController: _aiInputController,
-            isAILoading: _isLoadingAI,
+            isAILoading: panelState.isAILoading,
             onParseAI: _parseWithAI,
-            onKeyTap: _handleKeyTap,
+            onKeyTap: (key) {
+              ref
+                  .read(addPanelProvider.notifier)
+                  .handleKeyTap(
+                    key,
+                    () => _saveTransaction(),
+                    () => _saveTransaction(keepOpen: true),
+                  );
+            },
           ),
         ],
       ),

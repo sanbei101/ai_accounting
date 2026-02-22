@@ -1,12 +1,12 @@
-import 'dart:async';
-
 import 'package:ai_accounting/components/add_transaction_panel.dart';
 import 'package:ai_accounting/components/transaction_timeline_tile.dart';
 import 'package:ai_accounting/database/database.dart';
+import 'package:ai_accounting/providers.dart';
 import 'package:ai_accounting/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(const ProviderScope(child: MyApp()));
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -21,46 +21,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  List<Transaction> _transactions = [];
-  double _totalIncome = 0;
-  double _totalExpense = 0;
-  StreamSubscription<List<TransactionEntity>>? _transactionsSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _transactionsSubscription = appDatabase.watchAllTransactions().listen((
-      entities,
-    ) {
-      setState(() {
-        _transactions = entities.map(AppDatabase.entityToTransaction).toList()
-          ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
-      });
-      _updateTotals();
-    });
-  }
-
-  @override
-  void dispose() {
-    _transactionsSubscription?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _updateTotals() async {
-    final (income, expense) = await appDatabase.getTotals();
-    setState(() {
-      _totalIncome = income;
-      _totalExpense = expense;
-    });
-  }
 
   Future<void> _addTransaction(Transaction transaction) async {
     await appDatabase.insertTransaction(
@@ -77,7 +39,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final transactionsAsync = ref.watch(transactionsProvider);
+    final (income, expense) = ref.watch(totalsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 记账'),
@@ -106,7 +71,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     Text(
-                      '¥ ${(_totalIncome - _totalExpense).toStringAsFixed(2)}',
+                      '¥ ${(income - expense).toStringAsFixed(2)}',
                       style: context.textTheme.headlineLarge?.copyWith(
                         color: context.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.bold,
@@ -147,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '¥ ${_totalIncome.toStringAsFixed(2)}',
+                                    '¥ ${income.toStringAsFixed(2)}',
                                     style: context.textTheme.titleMedium
                                         ?.copyWith(
                                           color: context
@@ -194,7 +159,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '¥ ${_totalExpense.toStringAsFixed(2)}',
+                                    '¥ ${expense.toStringAsFixed(2)}',
                                     style: context.textTheme.titleMedium
                                         ?.copyWith(
                                           color: context
@@ -218,24 +183,31 @@ class _HomePageState extends State<HomePage> {
             Text('最近账单', style: context.textTheme.titleLarge),
             const SizedBox(height: 24),
             Expanded(
-              child: _transactions.isEmpty
-                  ? Center(
+              child: transactionsAsync.when(
+                data: (transactions) {
+                  if (transactions.isEmpty) {
+                    return Center(
                       child: Text(
                         '暂无账单',
                         style: context.textTheme.bodyLarge?.copyWith(
                           color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: _transactions.length,
-                      itemBuilder: (context, index) {
-                        return TransactionTimelineTile(
-                          transaction: _transactions[index],
-                          isLast: index == _transactions.length - 1,
-                        );
-                      },
-                    ),
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      return TransactionTimelineTile(
+                        transaction: transactions[index],
+                        isLast: index == transactions.length - 1,
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, e) => const Center(child: Text('加载失败')),
+              ),
             ),
           ],
         ),

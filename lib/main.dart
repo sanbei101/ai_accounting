@@ -46,7 +46,6 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 记账'),
-        scrolledUnderElevation: 0, // 保持之前说的，关掉变色
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.history)),
           IconButton(onPressed: () {}, icon: const Icon(Icons.person)),

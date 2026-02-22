@@ -155,7 +155,7 @@ class _CalculatorComponent extends StatelessWidget {
   final TextEditingController aiController;
   final bool isAILoading;
   final VoidCallback onParseAI;
-  final Function(String) onKeyTap;
+  final ValueChanged<String> onKeyTap;
 
   const _CalculatorComponent({
     required this.amount,
@@ -342,7 +342,7 @@ class _CalculatorComponent extends StatelessWidget {
 }
 
 class AddTransactionPanel extends StatefulWidget {
-  final Function(Transaction) onAdd;
+  final ValueChanged<Transaction> onAdd;
 
   const AddTransactionPanel({super.key, required this.onAdd});
 

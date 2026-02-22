@@ -60,14 +60,12 @@ class AddPanelState {
   final CategoryType selectedType;
   final Category? selectedCategory;
   final String amount;
-  final String remark;
   final bool isAILoading;
 
   const AddPanelState({
     this.selectedType = CategoryType.expense,
     this.selectedCategory,
     this.amount = '0.00',
-    this.remark = '',
     this.isAILoading = false,
   });
 
@@ -86,7 +84,6 @@ class AddPanelState {
       selectedType: selectedType ?? this.selectedType,
       selectedCategory: selectedCategory ?? this.selectedCategory,
       amount: amount ?? this.amount,
-      remark: remark ?? this.remark,
       isAILoading: isAILoading ?? this.isAILoading,
     );
   }

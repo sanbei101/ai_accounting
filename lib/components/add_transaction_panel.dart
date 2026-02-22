@@ -67,8 +67,12 @@ class _CategorySelectionComponent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final panelState = ref.watch(addPanelProvider);
-    final categories = panelState.categories;
+    final categories = ref.watch(
+      addPanelProvider.select((state) => state.categories),
+    );
+    final selectedCategory = ref.watch(
+      addPanelProvider.select((state) => state.selectedCategory),
+    );
 
     return Column(
       children: [
@@ -105,7 +109,7 @@ class _CategorySelectionComponent extends ConsumerWidget {
               final category = categories[index];
               return _CategoryItem(
                 category: category,
-                isSelected: panelState.selectedCategory == category,
+                isSelected: selectedCategory == category,
                 onTap: () =>
                     ref.read(addPanelProvider.notifier).setCategory(category),
               );
@@ -125,7 +129,9 @@ class _ExpenseIncomeTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSelected = ref.watch(addPanelProvider).selectedType == type;
+    final isSelected =
+        ref.watch(addPanelProvider.select((state) => state.selectedType)) ==
+        type;
     return GestureDetector(
       onTap: () => ref.read(addPanelProvider.notifier).setType(type),
       child: Container(
@@ -153,11 +159,16 @@ class _ExpenseIncomeTab extends ConsumerWidget {
 class _CalculatorSection extends ConsumerWidget {
   final Function({bool keepOpen}) onSave;
   final VoidCallback onParseAI;
-  const _CalculatorSection({required this.onSave, required this.onParseAI});
+  final TextEditingController remarkController;
+  const _CalculatorSection({
+    required this.onSave,
+    required this.onParseAI,
+    required this.remarkController,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final panelState = ref.watch(addPanelProvider);
+    final amount = ref.watch(addPanelProvider.select((state) => state.amount));
 
     return Container(
       decoration: BoxDecoration(
@@ -189,7 +200,7 @@ class _CalculatorSection extends ConsumerWidget {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      panelState.amount,
+                      amount,
                       style: context.textTheme.displaySmall?.copyWith(
                         color: context.colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -201,7 +212,10 @@ class _CalculatorSection extends ConsumerWidget {
                 ],
               ),
             ),
-            _RemarkInput(onParseAI: onParseAI),
+            _RemarkInput(
+              onParseAI: onParseAI,
+              remarkController: remarkController,
+            ),
             _Keypad(onSave: onSave),
           ],
         ),
@@ -210,35 +224,17 @@ class _CalculatorSection extends ConsumerWidget {
   }
 }
 
-class _RemarkInput extends ConsumerStatefulWidget {
+class _RemarkInput extends ConsumerWidget {
   final VoidCallback onParseAI;
+  final TextEditingController remarkController;
 
-  const _RemarkInput({required this.onParseAI});
-
-  @override
-  ConsumerState<_RemarkInput> createState() => _RemarkInputState();
-}
-
-class _RemarkInputState extends ConsumerState<_RemarkInput> {
-  late final TextEditingController _controller;
+  const _RemarkInput({required this.onParseAI, required this.remarkController});
 
   @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(
-      text: ref.read(addPanelProvider).remark,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAILoading = ref.watch(
+      addPanelProvider.select((state) => state.isAILoading),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final panelState = ref.watch(addPanelProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -251,22 +247,20 @@ class _RemarkInputState extends ConsumerState<_RemarkInput> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              controller: _controller,
+              controller: remarkController,
               decoration: InputDecoration(
-                hintText: '点击填写备注信息 支持AI智能记账)',
+                hintText: '点击填写备注信息 (支持AI智能记账)',
                 hintStyle: context.textTheme.bodyMedium?.copyWith(
                   color: context.colorScheme.onSurfaceVariant.withAlpha(150),
                 ),
                 border: InputBorder.none,
                 isDense: true,
               ),
-              onChanged: (value) =>
-                  ref.read(addPanelProvider.notifier).setRemark(value),
             ),
           ),
           IconButton(
-            onPressed: panelState.isAILoading ? null : widget.onParseAI,
-            icon: panelState.isAILoading
+            onPressed: isAILoading ? null : onParseAI,
+            icon: isAILoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
@@ -404,8 +398,16 @@ class AddTransactionPanel extends ConsumerStatefulWidget {
 }
 
 class _AddTransactionPanelState extends ConsumerState<AddTransactionPanel> {
+  final _remarkController = TextEditingController();
+
+  @override
+  void dispose() {
+    _remarkController.dispose();
+    super.dispose();
+  }
+
   Future<void> _parseWithAI() async {
-    final input = ref.read(addPanelProvider).remark.trim();
+    final input = _remarkController.text;
     if (input.isEmpty) return;
 
     ref.read(addPanelProvider.notifier).setAILoading(true);
@@ -469,7 +471,7 @@ class _AddTransactionPanelState extends ConsumerState<AddTransactionPanel> {
       type: panelState.selectedType,
       amount: amount,
       dateTime: DateTime.now(),
-      remark: panelState.remark.trim(),
+      remark: _remarkController.text,
     );
 
     widget.onAdd(transaction);
@@ -505,7 +507,11 @@ class _AddTransactionPanelState extends ConsumerState<AddTransactionPanel> {
         children: [
           dragHandle(context),
           const Expanded(child: _CategorySelectionComponent()),
-          _CalculatorSection(onSave: _saveTransaction, onParseAI: _parseWithAI),
+          _CalculatorSection(
+            onSave: _saveTransaction,
+            onParseAI: _parseWithAI,
+            remarkController: _remarkController,
+          ),
         ],
       ),
     );

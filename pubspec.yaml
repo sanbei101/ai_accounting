@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.9
   http: ^1.6.0
   drift: ^2.32.1
   drift_flutter: ^0.3.0
